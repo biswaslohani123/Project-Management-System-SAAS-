@@ -1,4 +1,5 @@
 import Workspace from "@/app/models/WokSpaceModel";
+import workspaceMember from "@/app/models/WorkspaceMember";
 import { getAuthUser } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -41,6 +42,13 @@ export async function POST(req: NextRequest) {
             description,
             owner: user._id
         }) 
+
+        await workspaceMember.create({
+
+            workspace: workspace._id,
+            user: user._id,
+            role: "OWNER"
+        })
 
         return NextResponse.json({
 
