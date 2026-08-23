@@ -53,7 +53,7 @@ export const getAuthUser = async () => {
 
        const user = await User.findById(decoded.userId).select("-password");
 
-       return null
+       return user
         
     } catch (error) {
 
