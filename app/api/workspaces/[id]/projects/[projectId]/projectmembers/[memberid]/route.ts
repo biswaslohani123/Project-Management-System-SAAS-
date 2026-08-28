@@ -4,7 +4,6 @@ import workspaceMember from "@/app/models/WorkspaceMember";
 import { getAuthUser } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { use } from "react";
 
 
 interface RouteParams {
@@ -121,7 +120,16 @@ export async function DELETE(req: NextRequest, { params }: RouteParams){
 
             success: false,
             message:"Internal server error"
+
         },{status: 500})
         
     }
 }
+
+
+
+
+  
+
+
+  
