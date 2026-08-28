@@ -278,11 +278,10 @@ export async function GET(req: NextRequest, { params }: RouteParams){
 
 export async function DELETE(req: NextRequest, { params }: RouteParams){
 
+
     try {
 
-        await connectDB()
-
-        const user = await getAuthUser()
+        const user = await getAuthUser();
 
         if (!user) {
 
@@ -290,57 +289,94 @@ export async function DELETE(req: NextRequest, { params }: RouteParams){
 
                 success: false,
                 message: "Unauthorized"
-            })
+
+            },{status: 401})
             
         }
 
-        const { projectId, taskId } = await params;
+        const {id, projectId, taskId} = await params;
 
-        const projectMember = await ProjectMember.findOne({
+        await connectDB();
 
-            project: projectId,
+          // 1. Check workspace membership
+
+          const currentMember = await workspaceMember.findOne({
+
+            workspace:id,
             user: user._id
-        })
-        
-        if (!projectMember) {
+          })
+
+          if (!currentMember) {
 
             return NextResponse.json({
 
                 success: false,
-                message: "You are not a member of this project"
+                message: "You are not a member of this workspace"
             },{status: 403})
             
-        }
+          }
 
-        const task = await Task.findOneAndDelete({
+            // 2. Only OWNER and ADMIN can delete tasks
 
-            _id: taskId,
-            project: projectId
-        })
+            if (!["OWNER", "ADMIN"].includes(currentMember.role)) {
 
-        if (!task) {
+
+                return NextResponse.json({
+
+                    success: false,
+                    message: "You do not have permission to delete this task"
+                },{status: 403})
+                
+            }
+
+            // 3. Check project belongs to workspace
+
+            const project = await Project.findOne({
+
+                _id: projectId,
+                workspace: id
+            })
+
+            if (!project) {
+
+                return NextResponse.json({
+
+                    success: false,
+                    message: "Project not found"
+                },{status: 404})
+            }
+
+            // 4. Delete task only if it belongs to this project
+
+            const task = await Task.findOneAndDelete({
+
+                _id: taskId,
+                project: projectId
+            })
+
+            if (!task) {
+
+                return NextResponse.json({
+
+                    success: false,
+                    message: 'Task not found'
+                },{status: 404})
+                
+            }
 
             return NextResponse.json({
 
-                success: false,
-                message:"Task not found"
-            },{status: 404})
-            
-        }
-    
-        return NextResponse.json({
-
-            success: true,
-            message: "Task deleted successfully"
-        },{status: 200})
-
+                success: true,
+                message: "Task deleted successfully"
+            })
+        
     } catch (error) {
 
-        console.error("Delete task error",error)
+        console.error("Delete Task error:", error)
 
         return NextResponse.json({
 
-            success: false,
+            succes: false,
             message: "Internal server error"
         },{status: 500})
         
