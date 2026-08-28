@@ -273,3 +273,78 @@ export async function GET(req: NextRequest, { params }: RouteParams){
       
     }
   }
+
+//   DELETE TASK
+
+export async function DELETE(req: NextRequest, { params }: RouteParams){
+
+    try {
+
+        await connectDB()
+
+        const user = await getAuthUser()
+
+        if (!user) {
+
+            return NextResponse.json({
+
+                success: false,
+                message: "Unauthorized"
+            })
+            
+        }
+
+        const { projectId, taskId } = await params;
+
+        const projectMember = await ProjectMember.findOne({
+
+            project: projectId,
+            user: user._id
+        })
+        
+        if (!projectMember) {
+
+            return NextResponse.json({
+
+                success: false,
+                message: "You are not a member of this project"
+            },{status: 403})
+            
+        }
+
+        const task = await Task.findOneAndDelete({
+
+            _id: taskId,
+            project: projectId
+        })
+
+        if (!task) {
+
+            return NextResponse.json({
+
+                success: false,
+                message:"Task not found"
+            },{status: 404})
+            
+        }
+    
+        return NextResponse.json({
+
+            success: true,
+            message: "Task deleted successfully"
+        },{status: 200})
+
+    } catch (error) {
+
+        console.error("Delete task error",error)
+
+        return NextResponse.json({
+
+            success: false,
+            message: "Internal server error"
+        },{status: 500})
+        
+    }
+
+
+}
